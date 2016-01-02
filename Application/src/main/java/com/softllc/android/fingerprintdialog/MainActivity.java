@@ -115,7 +115,7 @@ public class MainActivity extends Activity {
                 if ( initEncryptCipher() ) {
                     mFragment.setEncryptCipher(mEncryptCipher);
 
-                    if ( mSharedPreferences.getString(KEY_PASSWORD, "") != "" ) {
+                    if (mSharedPreferences.getString(KEY_PASSWORD, "") != "") {
                         if (initDecryptCipher()) {
 
                             // Show the fingerprint dialog to unlock the password
@@ -126,19 +126,11 @@ public class MainActivity extends Activity {
                             return;
                         }
                     }
-
-                    mFragment.setStage(FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
-                    mFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
-                } else {
-                    // This happens if the lock screen has been disabled or or a fingerprint got
-                    // enrolled. Thus show the dialog to authenticate with their password first
-                    // and ask the user if they want to authenticate with fingerprints in the
-                    // future
-                    mFragment.setEncryptCipher(mEncryptCipher);
-                    mFragment.setStage(
-                            FingerprintAuthenticationDialogFragment.Stage.NEW_FINGERPRINT_ENROLLED);
-                    mFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
                 }
+
+                mFragment.setStage(FingerprintAuthenticationDialogFragment.Stage.PASSWORD);
+                mFragment.show(getFragmentManager(), DIALOG_FRAGMENT_TAG);
+
             }
         });
     }
@@ -146,6 +138,11 @@ public class MainActivity extends Activity {
      private boolean initEncryptCipher() {
 
         mEncryptCipher = getCipher(Cipher.ENCRYPT_MODE);
+         if ( mEncryptCipher == null ) {
+             // try again after recreating the keystore
+             createKey();
+             mEncryptCipher = getCipher(Cipher.ENCRYPT_MODE);
+         }
         return ( mEncryptCipher != null) ;
 
     }
@@ -221,19 +218,29 @@ public class MainActivity extends Activity {
     }
 
 
-    /**
-     * Creates a symmetric key in the Android Key Store which can only be used after the user has
-     * authenticated with fingerprint.
-     */
-    public SecretKey createKey() {
-        // The enrolling flow for fingerprint. This is where you ask the user to set up fingerprint
-        // for your flow. Use of keys is necessary if you need to know if the set of
-        // enrolled fingerprints has changed.
-
+    private SecretKey getKey() {
         try {
             mKeyStore.load(null);
             SecretKey key = (SecretKey)mKeyStore.getKey(KEY_NAME, null);
             if ( key != null) return key;
+            return createKey();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (UnrecoverableKeyException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    private SecretKey createKey() {
+        try {
 
             // Set the alias of the entry in Android KeyStore where the key will appear
             // and the constrains (purposes) in the constructor of the Builder
@@ -246,13 +253,10 @@ public class MainActivity extends Activity {
                     .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_PKCS7)
                     .build());
             return mKeyGenerator.generateKey();
-        } catch (NoSuchAlgorithmException | InvalidAlgorithmParameterException
-                | CertificateException | IOException e) {
-            throw new RuntimeException(e);
-        } catch (UnrecoverableKeyException e) {
-            e.printStackTrace();
-        } catch (KeyStoreException e) {
-            e.printStackTrace();
+
+        }
+        catch(Exception e) {
+
         }
         return null;
     }
@@ -270,7 +274,7 @@ public class MainActivity extends Activity {
                     + KeyProperties.ENCRYPTION_PADDING_PKCS7);
             IvParameterSpec ivParams;
             if(mode == Cipher.ENCRYPT_MODE) {
-                cipher.init(mode, createKey());
+                cipher.init(mode, getKey());
 
             }
             else {

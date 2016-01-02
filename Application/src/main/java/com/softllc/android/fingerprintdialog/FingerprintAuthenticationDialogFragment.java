@@ -201,26 +201,13 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
             return;
         }
         if (mStage == Stage.PASSWORD) {
-            mActivity.createKey();
-            //mActivity.tryEncrypt(mEncryptoObject.getCipher(),mPassword.getText().toString());
             mStage = Stage.FINGERPRINT_ENCRYPT;
             updateStage();
             mFingerprintUiHelper.stopListening();
             mFingerprintUiHelper.startListening(new FingerprintManager.CryptoObject(mEncryptCipher));
             return;
         }
-        else if (mStage == Stage.NEW_FINGERPRINT_ENROLLED) {
-            SharedPreferences.Editor editor = mSharedPreferences.edit();
-            editor.putBoolean(getString(R.string.use_fingerprint_to_authenticate_key),
-                    mUseFingerprintFutureCheckBox.isChecked());
-            editor.apply();
 
-            if (mUseFingerprintFutureCheckBox.isChecked()) {
-                // Re-create the key so that fingerprints including new ones are validated.
-                mActivity.createKey();
-                mStage = Stage.FINGERPRINT_ENCRYPT;
-            }
-        }
         //mPassword.setText("");
         mActivity.onPurchased(mPassword.getText().toString(), false, false);
         dismiss();
@@ -264,19 +251,13 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
                         (ImageView) mView.findViewById(R.id.fingerprint_icon),
                         (TextView) mView.findViewById(R.id.fingerprint_status), this);
                 break;
-            case NEW_FINGERPRINT_ENROLLED:
-                // Intentional fall through
+
             case PASSWORD:
                 mCancelButton.setText(R.string.cancel);
                 mSecondDialogButton.setText(R.string.ok);
                 mFingerprintEncrypt.setVisibility(View.GONE);
                 mFingerprintDecrypt.setVisibility(View.GONE);
                 mBackupContent.setVisibility(View.VISIBLE);
-                if (mStage == Stage.NEW_FINGERPRINT_ENROLLED) {
-                    mPasswordDescriptionTextView.setVisibility(View.GONE);
-                    mNewFingerprintEnrolledTextView.setVisibility(View.VISIBLE);
-                    mUseFingerprintFutureCheckBox.setVisibility(View.VISIBLE);
-                }
                 break;
         }
     }
@@ -326,7 +307,6 @@ public class FingerprintAuthenticationDialogFragment extends DialogFragment
 
         FINGERPRINT_ENCRYPT,
         FINGERPRINT_DECRYPT,
-        NEW_FINGERPRINT_ENROLLED,
         PASSWORD
     }
 }
