@@ -63,19 +63,29 @@ public class MainActivity extends Activity {
 
     private static final String DIALOG_FRAGMENT_TAG = "myFragment";
 
-    /** Alias for our key in the Android Key Store */
+    /**
+     * Alias for our key in the Android Key Store
+     */
     private static final String KEY_NAME = "com.softllc.password.key";
     private static final String KEY_PASSWORD = "EncryptedPassword";
     private static final String KEY_PASSWORD_IV = "EncryptedPasswordIV";
 
-    @Inject KeyguardManager mKeyguardManager;
-    @Inject FingerprintManager mFingerprintManager;
-    @Inject FingerprintAuthenticationDialogFragment mFragment;
-    @Inject KeyStore mKeyStore;
-    @Inject KeyGenerator mKeyGenerator;
-    @Inject Cipher mEncryptCipher;
-    @Inject Cipher mDecryptCipher;
-    @Inject SharedPreferences mSharedPreferences;
+    @Inject
+    KeyguardManager mKeyguardManager;
+    @Inject
+    FingerprintManager mFingerprintManager;
+    @Inject
+    FingerprintAuthenticationDialogFragment mFragment;
+    @Inject
+    KeyStore mKeyStore;
+    @Inject
+    KeyGenerator mKeyGenerator;
+    @Inject
+    Cipher mEncryptCipher;
+    @Inject
+    Cipher mDecryptCipher;
+    @Inject
+    SharedPreferences mSharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -112,7 +122,7 @@ public class MainActivity extends Activity {
                 findViewById(R.id.confirmation_message).setVisibility(View.GONE);
                 findViewById(R.id.encrypted_message).setVisibility(View.GONE);
 
-                if ( initEncryptCipher() ) {
+                if (initEncryptCipher()) {
                     mFragment.setEncryptCipher(mEncryptCipher);
 
                     if (mSharedPreferences.getString(KEY_PASSWORD, "") != "") {
@@ -135,25 +145,25 @@ public class MainActivity extends Activity {
         });
     }
 
-     private boolean initEncryptCipher() {
+    private boolean initEncryptCipher() {
 
         mEncryptCipher = getCipher(Cipher.ENCRYPT_MODE);
-         if ( mEncryptCipher == null ) {
-             // try again after recreating the keystore
-             createKey();
-             mEncryptCipher = getCipher(Cipher.ENCRYPT_MODE);
-         }
-        return ( mEncryptCipher != null) ;
+        if (mEncryptCipher == null) {
+            // try again after recreating the keystore
+            createKey();
+            mEncryptCipher = getCipher(Cipher.ENCRYPT_MODE);
+        }
+        return (mEncryptCipher != null);
 
     }
 
     public boolean initDecryptCipher() {
         mDecryptCipher = getCipher(Cipher.DECRYPT_MODE);
-        return ( mDecryptCipher != null) ;
+        return (mDecryptCipher != null);
     }
 
     public void onPurchased(String password, boolean bDecrypt, boolean bEncrypt) {
-        showConfirmation(password + (bDecrypt ? " (fingerprint decrypt)":"") + (bEncrypt ? " (fingerprint encrypt)":""));
+        showConfirmation(password + (bDecrypt ? " (fingerprint decrypt)" : "") + (bEncrypt ? " (fingerprint encrypt)" : ""));
     }
 
     // Show confirmation, - show the plain text password
@@ -184,7 +194,6 @@ public class MainActivity extends Activity {
             editor.putString(KEY_PASSWORD_IV, iv);
             editor.commit();
             return true;
-
 
 
         } catch (BadPaddingException | IllegalBlockSizeException e) {
@@ -221,8 +230,8 @@ public class MainActivity extends Activity {
     private SecretKey getKey() {
         try {
             mKeyStore.load(null);
-            SecretKey key = (SecretKey)mKeyStore.getKey(KEY_NAME, null);
-            if ( key != null) return key;
+            SecretKey key = (SecretKey) mKeyStore.getKey(KEY_NAME, null);
+            if (key != null) return key;
             return createKey();
 
         } catch (IOException e) {
@@ -254,13 +263,11 @@ public class MainActivity extends Activity {
                     .build());
             return mKeyGenerator.generateKey();
 
-        }
-        catch(Exception e) {
+        } catch (Exception e) {
 
         }
         return null;
     }
-
 
 
     public Cipher getCipher(int mode) {
@@ -273,12 +280,11 @@ public class MainActivity extends Activity {
                     + KeyProperties.BLOCK_MODE_CBC + "/"
                     + KeyProperties.ENCRYPTION_PADDING_PKCS7);
             IvParameterSpec ivParams;
-            if(mode == Cipher.ENCRYPT_MODE) {
+            if (mode == Cipher.ENCRYPT_MODE) {
                 cipher.init(mode, getKey());
 
-            }
-            else {
-                SecretKey key = (SecretKey)mKeyStore.getKey(KEY_NAME, null);
+            } else {
+                SecretKey key = (SecretKey) mKeyStore.getKey(KEY_NAME, null);
                 iv = Base64.decode(mSharedPreferences.getString(KEY_PASSWORD_IV, ""), Base64.DEFAULT);
                 ivParams = new IvParameterSpec(iv);
                 cipher.init(mode, key, ivParams);
@@ -303,6 +309,7 @@ public class MainActivity extends Activity {
         }
         return null;
     }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
