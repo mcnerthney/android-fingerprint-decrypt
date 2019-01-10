@@ -3,7 +3,7 @@ Android encrypting and decrypting with a fingerprint
 
 An example that shows how to encrypt and decrypt a password using a fingerprint.
 
-The main trick for decrypting is use the key and iv from the encrypt.
+The main trick for decrypting is using the key and iv from the encrypt.
 
 License
 -------
